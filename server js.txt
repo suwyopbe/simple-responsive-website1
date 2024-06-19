@@ -1,0 +1,56 @@
+const express = require('express');
+const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
+const cors = require('cors');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// MongoDB setup
+mongoose.connect('mongodb://localhost:27017/daniel_wellington_db', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useCreateIndex: true
+});
+const db = mongoose.connection;
+db.on('error', console.error.bind(console, 'MongoDB connection error:'));
+db.once('open', () => {
+    console.log('Connected to MongoDB database');
+});
+
+// Middleware
+app.use(bodyParser.json());
+app.use(cors());
+
+// Contact model
+const Contact = mongoose.model('Contact', {
+    name: String,
+    email: String,
+    message: String
+});
+
+// Routes
+app.post('/api/contact', (req, res) => {
+    const { name, email, message } = req.body;
+
+    const newContact = new Contact({
+        name,
+        email,
+        message
+    });
+
+    newContact.save()
+        .then(() => {
+            console.log('Contact form data saved');
+            res.status(200).json({ message: 'Form submitted successfully' });
+        })
+        .catch(err => {
+            console.error('Error saving contact form data:', err);
+            res.status(500).json({ error: 'Failed to submit form' });
+        });
+});
+
+// Start server
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+});
